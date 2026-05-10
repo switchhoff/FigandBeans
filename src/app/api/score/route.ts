@@ -1,35 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-// Placeholder — wire up Vercel AI SDK here
-// import { generateText } from 'ai';
-// import { anthropic } from '@ai-sdk/anthropic';
+import { generateText } from 'ai';
+import { google } from '@ai-sdk/google';
 
 export async function POST(req: NextRequest) {
   const { prompt, humanResponse, aiResponse, mode } = await req.json();
 
-  // TODO: Replace with real AI judge using Vercel AI SDK
-  // const { text } = await generateText({
-  //   model: anthropic('claude-opus-4-7'),
-  //   prompt: buildJudgePrompt(prompt, humanResponse, aiResponse, mode),
-  // });
+  const { text } = await generateText({
+    model: google('gemini-2.0-flash'),
+    prompt: buildJudgePrompt(prompt, humanResponse, aiResponse, mode),
+  });
 
-  // Mock response for now
-  const mockScore = {
-    humanScore: 55 + Math.floor(Math.random() * 30),
-    aiScore: 45 + Math.floor(Math.random() * 30),
-    judgement: 'The judge has deliberated. Results are provisional and subject to the model\'s interpretation of humanity.',
-    guessedHumanWasHuman: true,
-    humanPercentage: 60,
-    breakdown: {
-      creativity: Math.floor(40 + Math.random() * 55),
-      emotionalDepth: Math.floor(40 + Math.random() * 55),
-      coherence: Math.floor(50 + Math.random() * 45),
-      aiPatterns: Math.floor(20 + Math.random() * 60),
-      surpriseFactor: Math.floor(20 + Math.random() * 70),
-    },
-  };
+  // Parse JSON from model output
+  let parsed;
+  try {
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    parsed = JSON.parse(jsonMatch?.[0] ?? text);
+  } catch {
+    return NextResponse.json({ error: 'Judge returned unparseable response', raw: text }, { status: 500 });
+  }
 
-  return NextResponse.json(mockScore);
+  return NextResponse.json(parsed);
 }
 
 // Future: build a detailed judge prompt

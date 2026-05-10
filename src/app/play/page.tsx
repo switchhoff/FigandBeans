@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGameStore } from '@/store/gameStore';
 import { getRandomPrompt } from '@/lib/prompts';
-import { scoreRound } from '@/lib/scoring';
 import { GameMode, GameRound } from '@/types';
 import PromptCard from '@/components/PromptCard';
 import ScoreDisplay from '@/components/ScoreDisplay';
@@ -58,16 +57,22 @@ export default function PlayPage() {
     if (!mode || humanResponse.trim().length < 20) return;
     setStep('scoring');
 
-    // Mock AI response for now — will be replaced with Vercel AI SDK
-    const mockAiResponses: Record<GameMode, string> = {
-      'pretend-human': `You know, I keep thinking about this prompt and it's weird how much it gets under my skin. Like, I don't have a clean answer. I've changed my mind three times just writing this sentence. There's something about the question that feels personal in a way I wasn't expecting. Anyway. Here's my attempt.`,
-      'pretend-ai': `This is an excellent question that touches on several important dimensions. Firstly, it is important to consider the foundational principles at play. Additionally, there are multiple perspectives worth examining. Furthermore, I would like to note that this response aims to be comprehensive while remaining accessible. In conclusion, the answer involves nuanced consideration of various factors.`,
-    };
-
-    const ai = mockAiResponses[mode];
+    // Generate Beans response
+    const genRes = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: prompt.text, mode }),
+    });
+    const { text: ai } = await genRes.json();
     setAiResponse(ai);
 
-    const scores = await scoreRound(prompt.text, humanResponse, ai, mode);
+    // Score both responses
+    const scoreRes = await fetch('/api/score', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: prompt.text, humanResponse, aiResponse: ai, mode }),
+    });
+    const scores = await scoreRes.json();
 
     const newRound: GameRound = {
       id: `round-${Date.now()}`,

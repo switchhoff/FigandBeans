@@ -1,18 +1,18 @@
 'use client';
 
 import { Prompt } from '@/types';
-import { RefreshCw, Tag } from 'lucide-react';
+import { RefreshCw, Sparkles } from 'lucide-react';
 
-const categoryColors: Record<string, string> = {
-  philosophy: '#7a5c45',
-  creative: '#4a7c6a',
-  opinion: '#6a5a7a',
-  absurd: '#7a4a4a',
-  technical: '#4a5a7a',
-  emotional: '#7a6a4a',
+const categoryColors: Record<string, { bg: string; text: string; border: string }> = {
+  philosophy: { bg: '#8B5CF618', text: '#A78BFA', border: '#8B5CF630' },
+  creative:   { bg: '#10B98118', text: '#34D399', border: '#10B98130' },
+  opinion:    { bg: '#F59E0B18', text: '#FCD34D', border: '#F59E0B30' },
+  absurd:     { bg: '#F9731618', text: '#FB923C', border: '#F9731630' },
+  technical:  { bg: '#3B82F618', text: '#60A5FA', border: '#3B82F630' },
+  emotional:  { bg: '#EC489918', text: '#F472B6', border: '#EC489930' },
 };
 
-const difficultyLabels = { easy: '◉○○', medium: '◉◉○', hard: '◉◉◉' };
+const difficultyDots = { easy: 1, medium: 2, hard: 3 };
 
 interface Props {
   prompt: Prompt;
@@ -21,64 +21,71 @@ interface Props {
 }
 
 export default function PromptCard({ prompt, onRefresh, compact }: Props) {
-  return (
-    <div
-      style={{
-        background: 'linear-gradient(135deg, #1a1410 0%, #251e18 100%)',
-        border: '1px solid #3a2e24',
-        borderRadius: '12px',
-        padding: compact ? '16px' : '24px',
-        position: 'relative',
-        overflow: 'hidden',
-      }}
-    >
-      {/* Decorative corner */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '3px',
-          height: '100%',
-          background: `linear-gradient(180deg, ${categoryColors[prompt.category]}, transparent)`,
-        }}
-      />
+  const cat = categoryColors[prompt.category] ?? categoryColors.creative;
+  const dots = difficultyDots[prompt.difficulty];
 
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
+  return (
+    <div style={{
+      background: 'linear-gradient(135deg, #18181B 0%, #1C1C1F 100%)',
+      border: '1px solid rgba(255,255,255,0.07)',
+      borderRadius: 14,
+      padding: compact ? '16px 20px' : '22px 26px',
+      position: 'relative',
+      overflow: 'hidden',
+    }}>
+      {/* Left accent */}
+      <div style={{
+        position: 'absolute', left: 0, top: 0, bottom: 0, width: 3,
+        background: `linear-gradient(180deg, ${cat.text}, transparent)`,
+        borderRadius: '3px 0 0 3px',
+      }} />
+
+      {/* Subtle top glow */}
+      <div style={{
+        position: 'absolute', top: 0, left: 0, right: 0, height: 1,
+        background: `linear-gradient(90deg, transparent, ${cat.text}44, transparent)`,
+      }} />
+
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
         <div style={{ flex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-            <Tag size={12} style={{ color: '#8a7a6a' }} />
-            <span style={{ color: '#8a7a6a', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+            <span className="badge" style={{
+              background: cat.bg, color: cat.text,
+              border: `1px solid ${cat.border}`,
+              fontSize: 10, padding: '2px 8px',
+            }}>
               {prompt.category}
             </span>
-            <span style={{ color: '#3a2e24', fontSize: '11px' }}>·</span>
-            <span style={{ color: '#c9a84c', fontSize: '11px' }}>{difficultyLabels[prompt.difficulty]}</span>
+            <div style={{ display: 'flex', gap: 3 }}>
+              {[1,2,3].map(i => (
+                <div key={i} style={{
+                  width: 5, height: 5, borderRadius: '50%',
+                  background: i <= dots ? cat.text : '#3F3F46',
+                  opacity: i <= dots ? 1 : 0.4,
+                }} />
+              ))}
+            </div>
           </div>
-          <p
-            style={{
-              color: '#e8dcc8',
-              fontSize: compact ? '15px' : '18px',
-              lineHeight: 1.6,
-              fontStyle: 'italic',
-            }}
-          >
-            &ldquo;{prompt.text}&rdquo;
+
+          <p style={{
+            color: '#FAFAFA',
+            fontSize: compact ? 14 : 17,
+            lineHeight: 1.65,
+            fontStyle: 'italic',
+            fontWeight: 400,
+            letterSpacing: '-0.01em',
+          }}>
+            <span style={{ color: cat.text, marginRight: 4, opacity: 0.7 }}>&ldquo;</span>
+            {prompt.text}
+            <span style={{ color: cat.text, marginLeft: 4, opacity: 0.7 }}>&rdquo;</span>
           </p>
         </div>
 
         {onRefresh && (
           <button
             onClick={onRefresh}
-            style={{
-              padding: '8px',
-              background: 'rgba(201, 168, 76, 0.1)',
-              border: '1px solid rgba(201, 168, 76, 0.2)',
-              borderRadius: '8px',
-              color: '#c9a84c',
-              cursor: 'pointer',
-              flexShrink: 0,
-              transition: 'all 0.15s',
-            }}
+            className="btn btn-ghost"
+            style={{ padding: '8px', flexShrink: 0, borderRadius: 8 }}
             title="New prompt"
           >
             <RefreshCw size={14} />

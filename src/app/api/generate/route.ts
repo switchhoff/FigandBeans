@@ -3,14 +3,19 @@ import { generateText } from 'ai';
 import { google } from '@ai-sdk/google';
 
 export async function POST(req: NextRequest) {
-  const { prompt, mode } = await req.json();
+  try {
+    const { prompt, mode, model = 'gemini-2.5-flash' } = await req.json();
 
-  const { text } = await generateText({
-    model: google('gemini-2.0-flash'),
-    prompt: buildBeansPrompt(prompt, mode),
-  });
+    const { text } = await generateText({
+      model: google(model),
+      prompt: buildBeansPrompt(prompt, mode),
+    });
 
-  return NextResponse.json({ text });
+    return NextResponse.json({ text });
+  } catch (err) {
+    console.error('[/api/generate]', err);
+    return NextResponse.json({ error: String(err) }, { status: 500 });
+  }
 }
 
 export function buildBeansPrompt(prompt: string, mode: string): string {

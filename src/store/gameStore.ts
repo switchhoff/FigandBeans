@@ -50,9 +50,11 @@ interface GameStore {
   leaderboard: LeaderboardEntry[];
   posts: CanvasPost[];
   currentRound: GameRound | null;
+  selectedModel: string;
 
   setUsername: (name: string) => void;
   acceptTerms: () => void;
+  setModel: (model: string) => void;
   addPoints: (human: number, ai: number) => void;
   addRound: (round: GameRound) => void;
   setCurrentRound: (round: GameRound | null) => void;
@@ -80,9 +82,11 @@ export const useGameStore = create<GameStore>()(
       leaderboard: MOCK_LEADERBOARD,
       posts: MOCK_POSTS,
       currentRound: null,
+      selectedModel: 'gemini-2.5-flash',
 
       setUsername: (name) => set(s => ({ user: { ...s.user, username: name } })),
       acceptTerms: () => set(s => ({ user: { ...s.user, termsAccepted: true } })),
+      setModel: (model) => set({ selectedModel: model }),
       addPoints: (human, ai) => set(s => ({
         user: {
           ...s.user,

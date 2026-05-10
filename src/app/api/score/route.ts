@@ -3,23 +3,28 @@ import { generateText } from 'ai';
 import { google } from '@ai-sdk/google';
 
 export async function POST(req: NextRequest) {
-  const { prompt, humanResponse, aiResponse, mode } = await req.json();
-
-  const { text } = await generateText({
-    model: google('gemini-2.0-flash'),
-    prompt: buildJudgePrompt(prompt, humanResponse, aiResponse, mode),
-  });
-
-  // Parse JSON from model output
-  let parsed;
   try {
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    parsed = JSON.parse(jsonMatch?.[0] ?? text);
-  } catch {
-    return NextResponse.json({ error: 'Judge returned unparseable response', raw: text }, { status: 500 });
-  }
+    const { prompt, humanResponse, aiResponse, mode, model = 'gemini-2.5-flash' } = await req.json();
 
-  return NextResponse.json(parsed);
+    const { text } = await generateText({
+      model: google(model),
+      prompt: buildJudgePrompt(prompt, humanResponse, aiResponse, mode),
+    });
+
+    let parsed;
+    try {
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      parsed = JSON.parse(jsonMatch?.[0] ?? text);
+    } catch {
+      console.error('[/api/score] unparseable:', text);
+      return NextResponse.json({ error: 'Judge returned unparseable response', raw: text }, { status: 500 });
+    }
+
+    return NextResponse.json(parsed);
+  } catch (err) {
+    console.error('[/api/score]', err);
+    return NextResponse.json({ error: String(err) }, { status: 500 });
+  }
 }
 
 // Future: build a detailed judge prompt
